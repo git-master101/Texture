@@ -88,7 +88,7 @@ static NSString *ASTextNodeTruncationTokenAttributeName = @"ASTextNodeTruncation
   }
   
   // NOTE: Skip the class check for this specialized, internal Key object.
-
+  
   // Lock both objects, avoiding deadlock.
   std::lock(_m, object->_m);
   std::lock_guard<std::mutex> lk1(_m, std::adopt_lock);
@@ -100,20 +100,20 @@ static NSString *ASTextNodeTruncationTokenAttributeName = @"ASTextNodeTruncation
 @end
 
 static NSCache *sharedRendererCache()
-{ 
- static dispatch_once_t onceToken;
- static NSCache *__rendererCache = nil;
- dispatch_once(&onceToken, ^{
-   __rendererCache = [[NSCache alloc] init];
-   __rendererCache.countLimit = 500; // 500 renders cache
- });
- return __rendererCache;
+{
+  static dispatch_once_t onceToken;
+  static NSCache *__rendererCache = nil;
+  dispatch_once(&onceToken, ^{
+    __rendererCache = [[NSCache alloc] init];
+    __rendererCache.countLimit = 500; // 500 renders cache
+  });
+  return __rendererCache;
 }
 
 /**
  The concept here is that neither the node nor layout should ever have a strong reference to the renderer object.
  This is to reduce memory load when loading thousands and thousands of text nodes into memory at once. Instead
- we maintain a LRU renderer cache that is queried via a unique key based on text kit attributes and constrained size. 
+ we maintain a LRU renderer cache that is queried via a unique key based on text kit attributes and constrained size.
  */
 
 static ASTextKitRenderer *rendererForAttributes(ASTextKitAttributes attributes, CGSize constrainedSize)
@@ -123,7 +123,7 @@ static ASTextKitRenderer *rendererForAttributes(ASTextKitAttributes attributes, 
   ASTextNodeRendererKey *key = [[ASTextNodeRendererKey alloc] init];
   key.attributes = attributes;
   key.constrainedSize = constrainedSize;
-
+  
   ASTextKitRenderer *renderer = [cache objectForKey:key];
   if (renderer == nil) {
     renderer = [[ASTextKitRenderer alloc] initWithTextKitAttributes:attributes constrainedSize:constrainedSize];
@@ -136,7 +136,7 @@ static ASTextKitRenderer *rendererForAttributes(ASTextKitAttributes attributes, 
 #pragma mark - ASTextNodeDrawParameter
 
 @interface ASTextNodeDrawParameter : NSObject {
-@package
+  @package
   ASTextKitAttributes _rendererAttributes;
   UIColor *_backgroundColor;
   UIEdgeInsets _textContainerInsets;
@@ -182,9 +182,9 @@ static ASTextKitRenderer *rendererForAttributes(ASTextKitAttributes attributes, 
   CGFloat _shadowRadius;
   
   UIEdgeInsets _textContainerInset;
-
+  
   NSArray *_exclusionPaths;
-
+  
   NSAttributedString *_attributedText;
   NSAttributedString *_truncationAttributedText;
   NSAttributedString *_additionalTruncationMessage;
@@ -193,13 +193,13 @@ static ASTextKitRenderer *rendererForAttributes(ASTextKitAttributes attributes, 
   NSLineBreakMode _truncationMode;
   
   NSUInteger _maximumNumberOfLines;
-
+  
   NSString *_highlightedLinkAttributeName;
   id _highlightedLinkAttributeValue;
   ASTextNodeHighlightStyle _highlightStyle;
   NSRange _highlightRange;
   ASHighlightOverlayLayer *_activeHighlightLayer;
-
+  
   UILongPressGestureRecognizer *_longPressGestureRecognizer;
 }
 @dynamic placeholderEnabled;
@@ -221,37 +221,37 @@ static NSArray *DefaultLinkAttributeNames() {
     _shadowColor = CGColorRetain([super shadowColor]);
     _shadowOpacity = [super shadowOpacity];
     _shadowRadius = [super shadowRadius];
-
+    
     // Disable user interaction for text node by default.
     self.userInteractionEnabled = NO;
     self.needsDisplayOnBoundsChange = YES;
-
+    
     _truncationMode = NSLineBreakByWordWrapping;
-
+    
     // The common case is for a text node to be non-opaque and blended over some background.
     self.opaque = NO;
     self.backgroundColor = [UIColor clearColor];
-
+    
     self.linkAttributeNames = DefaultLinkAttributeNames();
-
+    
     // Accessibility
     self.isAccessibilityElement = YES;
     self.accessibilityTraits = self.defaultAccessibilityTraits;
-
+    
     // Placeholders
     // Disabled by default in ASDisplayNode, but add a few options for those who toggle
     // on the special placeholder behavior of ASTextNode.
     _placeholderColor = ASDisplayNodeDefaultPlaceholderColor();
     _placeholderInsets = UIEdgeInsetsMake(1.0, 0.0, 1.0, 0.0);
   }
-
+  
   return self;
 }
 
 - (void)dealloc
 {
   CGColorRelease(_shadowColor);
-
+  
   // TODO: This may not be necessary post-iOS-9 when most UIKit assign APIs
   // were changed to weak.
   if (_longPressGestureRecognizer) {
@@ -299,13 +299,10 @@ static NSArray *DefaultLinkAttributeNames() {
   [super didLoad];
   
   // If we are view-backed and the delegate cares, support the long-press callback.
-  SEL longPressCallback = @selector(textNode:longPressedLinkAttribute:value:atPoint:textRange:);
-  if (!self.isLayerBacked && [_delegate respondsToSelector:longPressCallback]) {
-    _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handleLongPress:)];
-    _longPressGestureRecognizer.cancelsTouchesInView = self.longPressCancelsTouches;
-    _longPressGestureRecognizer.delegate = self;
-    [self.view addGestureRecognizer:_longPressGestureRecognizer];
-  }
+  _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handleLongPress:)];
+  _longPressGestureRecognizer.cancelsTouchesInView = self.longPressCancelsTouches;
+  _longPressGestureRecognizer.delegate = self;
+  [self.view addGestureRecognizer:_longPressGestureRecognizer];
 }
 
 - (BOOL)supportsLayerBacking
@@ -409,7 +406,7 @@ static NSArray *DefaultLinkAttributeNames() {
   
   // Cache the original constrained size for final size calculateion
   CGSize originalConstrainedSize = constrainedSize;
-
+  
   [self setNeedsDisplay];
   
   ASTextKitRenderer *renderer = [self _locked_rendererWithBounds:{.size = constrainedSize}];
@@ -435,7 +432,7 @@ static NSArray *DefaultLinkAttributeNames() {
 #pragma mark - Modifying User Text
 
 // Returns the ascender of the first character in attributedString by also including the line height if specified in paragraph style.
-+ (CGFloat)ascenderWithAttributedString:(NSAttributedString *)attributedString 
++ (CGFloat)ascenderWithAttributedString:(NSAttributedString *)attributedString
 {
   UIFont *font = [attributedString attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
   NSParagraphStyle *paragraphStyle = [attributedString attribute:NSParagraphStyleAttributeName atIndex:0 effectiveRange:NULL];
@@ -461,20 +458,20 @@ static NSArray *DefaultLinkAttributeNames() {
   if (attributedText == nil) {
     attributedText = [[NSAttributedString alloc] initWithString:@"" attributes:nil];
   }
-
+  
   {
     ASLockScopeSelf();
     if (ASObjectIsEqual(attributedText, _attributedText)) {
       return;
     }
-
+    
     NSAttributedString *cleanedAttributedString = ASCleanseAttributedStringOfCoreTextAttributes(attributedText);
-
+    
     // Invalidating the truncation text must be done while we still hold the lock. Because after we release it,
     // another thread may set a new truncation text that will then be cleared by this thread, other may draw
     // this soon-to-be-invalidated text.
     [self _locked_invalidateTruncationText];
-
+    
     NSUInteger length = cleanedAttributedString.length;
     if (length > 0) {
       // Updating ascender and descender in one transaction while holding the lock.
@@ -482,14 +479,14 @@ static NSArray *DefaultLinkAttributeNames() {
       style.ascender = [[self class] ascenderWithAttributedString:cleanedAttributedString];
       style.descender = [[attributedText attribute:NSFontAttributeName atIndex:cleanedAttributedString.length - 1 effectiveRange:NULL] descender];
     }
-   
+    
     // Update attributed text with cleaned attributed string
     _attributedText = cleanedAttributedString;
   }
   
   // Tell the display node superclasses that the cached layout is incorrect now
   [self setNeedsLayout];
-
+  
   // Force display to create renderer with new size and redisplay with new string
   [self setNeedsDisplay];
   
@@ -497,7 +494,7 @@ static NSArray *DefaultLinkAttributeNames() {
   const auto currentAttributedText = self.attributedText; // Grab attributed string again in case it changed in the meantime
   self.accessibilityLabel = self.defaultAccessibilityLabel;
   self.isAccessibilityElement = (currentAttributedText.length != 0); // We're an accessibility element by default if there is a string.
-
+  
 #if AS_TEXTNODE_RECORD_ATTRIBUTED_STRINGS
   [ASTextNode _registerAttributedText:_attributedText];
 #endif
@@ -538,7 +535,7 @@ static NSArray *DefaultLinkAttributeNames() {
   
   CGContextRef context = UIGraphicsGetCurrentContext();
   ASDisplayNodeAssert(context, @"This is no good without a context.");
- 
+  
   CGContextSaveGState(context);
   CGContextTranslateCTM(context, textContainerInsets.left, textContainerInsets.top);
   
@@ -580,15 +577,15 @@ static NSArray *DefaultLinkAttributeNames() {
   NSRange visibleRange = renderer.firstVisibleRange;
   NSAttributedString *attributedString = _attributedText;
   NSRange clampedRange = NSIntersectionRange(visibleRange, NSMakeRange(0, attributedString.length));
-
+  
   // Check in a 9-point region around the actual touch point so we make sure
   // we get the best attribute for the touch.
   __block CGFloat minimumGlyphDistance = CGFLOAT_MAX;
-
+  
   // Final output vars
   __block id linkAttributeValue = nil;
   __block BOOL inTruncationMessage = NO;
-
+  
   [renderer enumerateTextIndexesAtPosition:point usingBlock:^(NSUInteger characterIndex, CGRect glyphBoundingRect, BOOL *stop) {
     CGPoint glyphLocation = CGPointMake(CGRectGetMidX(glyphBoundingRect), CGRectGetMidY(glyphBoundingRect));
     CGFloat currentDistance = std::sqrt(std::pow(point.x - glyphLocation.x, 2.f) + std::pow(point.y - glyphLocation.y, 2.f));
@@ -598,35 +595,35 @@ static NSArray *DefaultLinkAttributeNames() {
       // to the next location.
       return;
     }
-
+    
     // Check if it's outside the visible range, if so, then we mark this touch
     // as inside the truncation message, because in at least one of the touch
     // points it was.
     if (!(NSLocationInRange(characterIndex, visibleRange))) {
       inTruncationMessage = YES;
     }
-
+    
     if (inAdditionalTruncationMessageOut != NULL) {
       *inAdditionalTruncationMessageOut = inTruncationMessage;
     }
-
+    
     // Short circuit here if it's just in the truncation message.  Since the
     // truncation message may be beyond the scope of the actual input string,
     // we have to make sure that we don't start asking for attributes on it.
     if (inTruncationMessage) {
       return;
     }
-
+    
     for (NSString *attributeName in self->_linkAttributeNames) {
       NSRange range;
       id value = [attributedString attribute:attributeName atIndex:characterIndex longestEffectiveRange:&range inRange:clampedRange];
       NSString *name = attributeName;
-
+      
       if (value == nil || name == nil) {
         // Didn't find anything
         continue;
       }
-
+      
       // If highlighting, check with delegate first. If not implemented, assume YES.
       if (highlighting
           && [self->_delegate respondsToSelector:@selector(textNode:shouldHighlightLinkAttribute:value:atPoint:)]
@@ -634,12 +631,12 @@ static NSArray *DefaultLinkAttributeNames() {
         value = nil;
         name = nil;
       }
-
+      
       if (value != nil || name != nil) {
         // We found a minimum glyph distance link attribute, so set the min
         // distance, and the out params.
         minimumGlyphDistance = currentDistance;
-
+        
         if (rangeOut != NULL && value != nil) {
           *rangeOut = range;
           // Limit to only the visible range, because the attributed string will
@@ -648,19 +645,19 @@ static NSArray *DefaultLinkAttributeNames() {
             (*rangeOut).length = MAX(NSMaxRange(visibleRange) - (*rangeOut).location, 0);
           }
         }
-
+        
         if (attributeNameOut != NULL) {
           *attributeNameOut = name;
         }
-
+        
         // Set the values for the next iteration
         linkAttributeValue = value;
-
+        
         break;
       }
     }
   }];
-
+  
   return linkAttributeValue;
 }
 
@@ -675,25 +672,25 @@ static NSArray *DefaultLinkAttributeNames() {
     if ([self _pendingTruncationTap]) {
       return NO;
     }
-
+    
     // Ask our delegate if a long-press on an attribute is relevant
     if ([self _pendingLinkTap] && [_delegate respondsToSelector:@selector(textNode:shouldLongPressLinkAttribute:value:atPoint:)]) {
       return [_delegate textNode:self
-        shouldLongPressLinkAttribute:_highlightedLinkAttributeName
-                               value:_highlightedLinkAttributeValue
-                             atPoint:[gestureRecognizer locationInView:self.view]];
+    shouldLongPressLinkAttribute:_highlightedLinkAttributeName
+                           value:_highlightedLinkAttributeValue
+                         atPoint:[gestureRecognizer locationInView:self.view]];
     }
-
+    
     // Otherwise we are good to go.
     return YES;
   }
-
+  
   if (([self _pendingLinkTap] || [self _pendingTruncationTap])
       && [gestureRecognizer isKindOfClass:[UITapGestureRecognizer class]]
       && CGRectContainsPoint(self.threadSafeBounds, [gestureRecognizer locationInView:self.view])) {
     return NO;
   }
-
+  
   return [super gestureRecognizerShouldBegin:gestureRecognizer];
 }
 
@@ -733,21 +730,21 @@ static NSArray *DefaultLinkAttributeNames() {
 - (void)_setHighlightRange:(NSRange)highlightRange forAttributeName:(NSString *)highlightedAttributeName value:(id)highlightedAttributeValue animated:(BOOL)animated
 {
   ASDisplayNodeAssertMainThread();
-
+  
   _highlightedLinkAttributeName = highlightedAttributeName;
   _highlightedLinkAttributeValue = highlightedAttributeValue;
-
+  
   if (!NSEqualRanges(highlightRange, _highlightRange) && ((0 != highlightRange.length) || (0 != _highlightRange.length))) {
-
+    
     _highlightRange = highlightRange;
-
+    
     if (_activeHighlightLayer) {
       if (animated) {
         __weak CALayer *weakHighlightLayer = _activeHighlightLayer;
         _activeHighlightLayer = nil;
-
+        
         weakHighlightLayer.opacity = 0.0;
-
+        
         CFTimeInterval beginTime = CACurrentMediaTime();
         CABasicAnimation *possibleFadeIn = (CABasicAnimation *)[weakHighlightLayer animationForKey:@"opacity"];
         if (possibleFadeIn) {
@@ -766,16 +763,16 @@ static NSArray *DefaultLinkAttributeNames() {
         fadeOut.fillMode = kCAFillModeBoth;
         fadeOut.duration = ASTextNodeHighlightFadeOutDuration;
         fadeOut.beginTime = beginTime;
-
+        
         dispatch_block_t prev = [CATransaction completionBlock];
         [CATransaction setCompletionBlock:^{
           [weakHighlightLayer removeFromSuperlayer];
         }];
-
+        
         [weakHighlightLayer addAnimation:fadeOut forKey:fadeOut.keyPath];
-
+        
         [CATransaction setCompletionBlock:prev];
-
+        
       } else {
         [_activeHighlightLayer removeFromSuperlayer];
         _activeHighlightLayer = nil;
@@ -790,51 +787,51 @@ static NSArray *DefaultLinkAttributeNames() {
         }
         highlightTargetLayer = highlightTargetLayer.superlayer;
       }
-
+      
       if (highlightTargetLayer != nil) {
         ASLockScopeSelf();
         ASTextKitRenderer *renderer = [self _locked_renderer];
-
+        
         NSArray *highlightRects = [renderer rectsForTextRange:highlightRange measureOption:ASTextKitRendererMeasureOptionBlock];
         NSMutableArray *converted = [NSMutableArray arrayWithCapacity:highlightRects.count];
         for (NSValue *rectValue in highlightRects) {
           UIEdgeInsets shadowPadding = renderer.shadower.shadowPadding;
           CGRect rendererRect = ASTextNodeAdjustRenderRectForShadowPadding(rectValue.CGRectValue, shadowPadding);
-
+          
           // The rects returned from renderer don't have `textContainerInset`,
           // as well as they are using the `constrainedSize` for layout,
           // so we can simply increase the rect by insets to get the full blown layout.
           rendererRect.size.width += _textContainerInset.left + _textContainerInset.right;
           rendererRect.size.height += _textContainerInset.top + _textContainerInset.bottom;
-
+          
           CGRect highlightedRect = [self.layer convertRect:rendererRect toLayer:highlightTargetLayer];
-
+          
           // We set our overlay layer's frame to the bounds of the highlight target layer.
           // Offset highlight rects to avoid double-counting target layer's bounds.origin.
           highlightedRect.origin.x -= highlightTargetLayer.bounds.origin.x;
           highlightedRect.origin.y -= highlightTargetLayer.bounds.origin.y;
           [converted addObject:[NSValue valueWithCGRect:highlightedRect]];
         }
-
+        
         ASHighlightOverlayLayer *overlayLayer = [[ASHighlightOverlayLayer alloc] initWithRects:converted];
         overlayLayer.highlightColor = [[self class] _highlightColorForStyle:self.highlightStyle];
         overlayLayer.frame = highlightTargetLayer.bounds;
         overlayLayer.masksToBounds = NO;
         overlayLayer.opacity = [[self class] _highlightOpacityForStyle:self.highlightStyle];
         [highlightTargetLayer addSublayer:overlayLayer];
-
+        
         if (animated) {
           CABasicAnimation *fadeIn = [CABasicAnimation animationWithKeyPath:@"opacity"];
           fadeIn.fromValue = @0.0;
           fadeIn.toValue = @(overlayLayer.opacity);
           fadeIn.duration = ASTextNodeHighlightFadeInDuration;
           fadeIn.beginTime = CACurrentMediaTime();
-
+          
           [overlayLayer addAnimation:fadeIn forKey:fadeIn.keyPath];
         }
-
+        
         [overlayLayer setNeedsDisplay];
-
+        
         _activeHighlightLayer = overlayLayer;
       }
     }
@@ -884,15 +881,15 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
   
   NSArray *rects = [[self _locked_renderer] rectsForTextRange:textRange measureOption:measureOption];
   const auto adjustedRects = [[NSMutableArray<NSValue *> alloc] init];
-
+  
   for (NSValue *rectValue in rects) {
     CGRect rect = [rectValue CGRectValue];
     rect = ASTextNodeAdjustRenderRectForShadowPadding(rect, self.shadowPadding);
-
+    
     NSValue *adjustedRectValue = [NSValue valueWithCGRect:rect];
     [adjustedRects addObject:adjustedRectValue];
   }
-
+  
   return adjustedRects;
 }
 
@@ -939,23 +936,23 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
   
   ASGraphicsBeginImageContextWithOptions(size, NO, 1.0);
   [self.placeholderColor setFill];
-
+  
   ASTextKitRenderer *renderer = [self _locked_renderer];
   NSRange visibleRange = renderer.firstVisibleRange;
-
+  
   // cap height is both faster and creates less subpixel blending
   NSArray *lineRects = [self _rectsForTextRange:visibleRange measureOption:ASTextKitRendererMeasureOptionLineHeight];
-
+  
   // fill each line with the placeholder color
   for (NSValue *rectValue in lineRects) {
     CGRect lineRect = [rectValue CGRectValue];
     CGRect fillBounds = CGRectIntegral(UIEdgeInsetsInsetRect(lineRect, self.placeholderInsets));
-
+    
     if (fillBounds.size.width > 0.0 && fillBounds.size.height > 0.0) {
       UIRectFill(fillBounds);
     }
   }
-
+  
   UIImage *image = ASGraphicsGetImageAndEndCurrentContext();
   return image;
 }
@@ -969,20 +966,20 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
   if (!_passthroughNonlinkTouches) {
     return [super pointInside:point withEvent:event];
   }
-
+  
   NSRange range = NSMakeRange(0, 0);
   NSString *linkAttributeName = nil;
   BOOL inAdditionalTruncationMessage = NO;
-
+  
   id linkAttributeValue = [self _linkAttributeValueAtPoint:point
                                              attributeName:&linkAttributeName
                                                      range:&range
                              inAdditionalTruncationMessage:&inAdditionalTruncationMessage
                                            forHighlighting:YES];
-
+  
   NSUInteger lastCharIndex = NSIntegerMax;
   BOOL linkCrossesVisibleRange = (lastCharIndex > range.location) && (lastCharIndex < NSMaxRange(range) - 1);
-
+  
   if (range.length > 0 && !linkCrossesVisibleRange && linkAttributeValue != nil && linkAttributeName != nil) {
     return YES;
   } else {
@@ -995,22 +992,22 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
   ASDisplayNodeAssertMainThread();
   
   [super touchesBegan:touches withEvent:event];
-
+  
   CGPoint point = [[touches anyObject] locationInView:self.view];
-
+  
   NSRange range = NSMakeRange(0, 0);
   NSString *linkAttributeName = nil;
   BOOL inAdditionalTruncationMessage = NO;
-
+  
   id linkAttributeValue = [self _linkAttributeValueAtPoint:point
                                              attributeName:&linkAttributeName
                                                      range:&range
                              inAdditionalTruncationMessage:&inAdditionalTruncationMessage
                                            forHighlighting:YES];
-
+  
   NSUInteger lastCharIndex = NSIntegerMax;
   BOOL linkCrossesVisibleRange = (lastCharIndex > range.location) && (lastCharIndex < NSMaxRange(range) - 1);
-
+  
   if (inAdditionalTruncationMessage) {
     NSRange visibleRange = NSMakeRange(0, 0);
     {
@@ -1042,13 +1039,13 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
     CGPoint point = [[touches anyObject] locationInView:self.view];
     [_delegate textNode:self tappedLinkAttribute:_highlightedLinkAttributeName value:_highlightedLinkAttributeValue atPoint:point textRange:_highlightRange];
   }
-
+  
   if ([self _pendingTruncationTap]) {
     if ([_delegate respondsToSelector:@selector(textNodeTappedTruncationToken:)]) {
       [_delegate textNodeTappedTruncationToken:self];
     }
   }
-
+  
   [self _clearHighlightIfNecessary];
 }
 
@@ -1056,7 +1053,7 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
 {
   ASDisplayNodeAssertMainThread();
   [super touchesMoved:touches withEvent:event];
-
+  
   UITouch *touch = [touches anyObject];
   CGPoint locationInView = [touch locationInView:self.view];
   // on 3D Touch enabled phones, this gets fired with changes in force, and usually will get fired immediately after touchesBegan:withEvent:
@@ -1071,7 +1068,7 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
                                range:&range
        inAdditionalTruncationMessage:NULL
                      forHighlighting:YES];
-
+    
     if (!NSEqualRanges(_highlightRange, range)) {
       [self _clearHighlightIfNecessary];
     }
@@ -1087,9 +1084,42 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
     if ([self _pendingLinkTap] && [_delegate respondsToSelector:@selector(textNode:longPressedLinkAttribute:value:atPoint:textRange:)]) {
       CGPoint touchPoint = [_longPressGestureRecognizer locationInView:self.view];
       [_delegate textNode:self longPressedLinkAttribute:_highlightedLinkAttributeName value:_highlightedLinkAttributeValue atPoint:touchPoint textRange:_highlightRange];
+    }else{
+      CGPoint location = [longPressRecognizer locationInView:[longPressRecognizer view]];
+      UIMenuController *menuController = [UIMenuController sharedMenuController];
+      //        UIMenuItem *resetMenuItem = [[UIMenuItem alloc] initWithTitle:@"Item" action:@selector(menuItemClicked:)];
+      
+      NSAssert([self becomeFirstResponder], @"Sorry, UIMenuController will not work with %@ since it cannot become first responder", self);
+      //        [menuController setMenuItems:[NSArray arrayWithObject:resetMenuItem]];
+      [menuController setTargetRect:CGRectMake(location.x, location.y - 10, 0.0f, 0.0f) inView:[longPressRecognizer view]];
+      [menuController setMenuVisible:YES animated:YES];
     }
   }
 }
+
+- (void) copy:(id) sender {
+  [[UIPasteboard generalPasteboard] setString:self.attributedText.string];
+}
+
+//- (void) menuItemClicked:(id) sender {
+//    // called when Item clicked in menu
+//}
+
+- (BOOL) canPerformAction:(SEL)selector withSender:(id) sender {
+  //    if (selector == @selector(menuItemClicked:) || selector == @selector(copy:)) {
+  if (selector == @selector(copy:)){
+    return YES;
+  }
+  return NO;
+}
+
+- (BOOL) canBecomeFirstResponder {
+  return YES;
+}
+
+//- (BOOL)resignFirstResponder{
+//    return NO;
+//}
 
 - (BOOL)_pendingLinkTap
 {
@@ -1115,7 +1145,7 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
 - (void)setShadowColor:(CGColorRef)shadowColor
 {
   [self lock];
-
+  
   if (_shadowColor != shadowColor && CGColorEqualToColor(shadowColor, _shadowColor) == NO) {
     CGColorRelease(_shadowColor);
     _shadowColor = CGColorRetain(shadowColor);
@@ -1125,7 +1155,7 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
     [self setNeedsDisplay];
     return;
   }
-
+  
   [self unlock];
 }
 
@@ -1252,7 +1282,7 @@ static NSAttributedString *DefaultTruncationAttributedString()
 
 - (NSUInteger)maximumNumberOfLines
 {
-   return ASLockedSelf(_maximumNumberOfLines);
+  return ASLockedSelf(_maximumNumberOfLines);
 }
 
 - (NSUInteger)lineCount
@@ -1285,10 +1315,10 @@ static NSAttributedString *DefaultTruncationAttributedString()
   if (!_additionalTruncationMessage) {
     return NSMakeRange(NSNotFound, 0);
   }
-
+  
   // Character location of the unicode ellipsis (the first index after the visible range)
   NSInteger truncationTokenIndex = NSMaxRange(visibleRange);
-
+  
   NSUInteger additionalTruncationMessageLength = _additionalTruncationMessage.length;
   // We get the location of the truncation token, then add the length of the
   // truncation attributed string +1 for the space between.
@@ -1340,10 +1370,10 @@ static NSAttributedString *DefaultTruncationAttributedString()
     NSDictionary *originalStringAttributes = [originalString attributesAtIndex:originalStringLength-1 effectiveRange:NULL];
     [truncationString enumerateAttributesInRange:NSMakeRange(0, truncationString.length) options:0 usingBlock:
      ^(NSDictionary *attributes, NSRange range, BOOL *stop) {
-       NSMutableDictionary *futureTruncationAttributes = [originalStringAttributes mutableCopy];
-       [futureTruncationAttributes addEntriesFromDictionary:attributes];
-       [truncationMutableString setAttributes:futureTruncationAttributes range:range];
-     }];
+      NSMutableDictionary *futureTruncationAttributes = [originalStringAttributes mutableCopy];
+      [futureTruncationAttributes addEntriesFromDictionary:attributes];
+      [truncationMutableString setAttributes:futureTruncationAttributes range:range];
+    }];
   }
   return truncationMutableString;
 }
@@ -1377,7 +1407,7 @@ static NSAttributedString *DefaultTruncationAttributedString()
 {
   // Texture requires that node subclasses call [super initialize]
   [super initialize];
-
+  
   if (class_getSuperclass(self) == [ASTextNode class]
       && ASActivateExperimentalFeature(ASExperimentalTextNode)) {
 #pragma clang diagnostic push
