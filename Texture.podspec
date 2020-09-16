@@ -38,11 +38,11 @@ Pod::Spec.new do |spec|
     ]
   end
   
-  spec.subspec 'PINRemoteImage' do |pin|
-    pin.dependency 'PINRemoteImage/iOS'
-    pin.dependency 'PINRemoteImage/PINCache'
-    pin.dependency 'Texture/Core'
-  end
+  #spec.subspec 'PINRemoteImage' do |pin|
+   # pin.dependency 'PINRemoteImage/iOS'
+    #pin.dependency 'PINRemoteImage/PINCache'
+    #pin.dependency 'Texture/Core'
+  #end
 
   spec.subspec 'IGListKit' do |igl|
     igl.dependency 'IGListKit', '~> 3.0'
