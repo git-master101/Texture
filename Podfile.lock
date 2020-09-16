@@ -3,14 +3,14 @@ PODS:
   - FLAnimatedImage (1.0.12)
   - JGMethodSwizzler (2.0.1)
   - OCMock (3.4.1)
-  - PINCache (3.0.1):
-    - PINCache/Arc-exception-safe (= 3.0.1)
-    - PINCache/Core (= 3.0.1)
-  - PINCache/Arc-exception-safe (3.0.1):
+  - PINCache (3.0.1-beta.6):
+    - PINCache/Arc-exception-safe (= 3.0.1-beta.6)
+    - PINCache/Core (= 3.0.1-beta.6)
+  - PINCache/Arc-exception-safe (3.0.1-beta.6):
     - PINCache/Core
-  - PINCache/Core (3.0.1):
-    - PINOperation (~> 1.2.0)
-  - PINOperation (1.2)
+  - PINCache/Core (3.0.1-beta.6):
+    - PINOperation (~> 1.1.0)
+  - PINOperation (1.1.1)
   - PINRemoteImage (3.0.0-beta.13):
     - PINRemoteImage/FLAnimatedImage (= 3.0.0-beta.13)
     - PINRemoteImage/PINCache (= 3.0.0-beta.13)
