@@ -298,11 +298,6 @@ static NSArray *DefaultLinkAttributeNames() {
 {
   [super didLoad];
   
-  // If we are view-backed and the delegate cares, support the long-press callback.
-  _longPressGestureRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(_handleLongPress:)];
-  _longPressGestureRecognizer.cancelsTouchesInView = self.longPressCancelsTouches;
-  _longPressGestureRecognizer.delegate = self;
-  [self.view addGestureRecognizer:_longPressGestureRecognizer];
 }
 
 - (BOOL)supportsLayerBacking
@@ -1084,42 +1079,9 @@ static CGRect ASTextNodeAdjustRenderRectForShadowPadding(CGRect rendererRect, UI
     if ([self _pendingLinkTap] && [_delegate respondsToSelector:@selector(textNode:longPressedLinkAttribute:value:atPoint:textRange:)]) {
       CGPoint touchPoint = [_longPressGestureRecognizer locationInView:self.view];
       [_delegate textNode:self longPressedLinkAttribute:_highlightedLinkAttributeName value:_highlightedLinkAttributeValue atPoint:touchPoint textRange:_highlightRange];
-    }else{
-      CGPoint location = [longPressRecognizer locationInView:[longPressRecognizer view]];
-      UIMenuController *menuController = [UIMenuController sharedMenuController];
-      //        UIMenuItem *resetMenuItem = [[UIMenuItem alloc] initWithTitle:@"Item" action:@selector(menuItemClicked:)];
-      
-      NSAssert([self becomeFirstResponder], @"Sorry, UIMenuController will not work with %@ since it cannot become first responder", self);
-      //        [menuController setMenuItems:[NSArray arrayWithObject:resetMenuItem]];
-      [menuController setTargetRect:CGRectMake(location.x, location.y - 10, 0.0f, 0.0f) inView:[longPressRecognizer view]];
-      [menuController setMenuVisible:YES animated:YES];
     }
   }
 }
-
-- (void) copy:(id) sender {
-  [[UIPasteboard generalPasteboard] setString:self.attributedText.string];
-}
-
-//- (void) menuItemClicked:(id) sender {
-//    // called when Item clicked in menu
-//}
-
-- (BOOL) canPerformAction:(SEL)selector withSender:(id) sender {
-  //    if (selector == @selector(menuItemClicked:) || selector == @selector(copy:)) {
-  if (selector == @selector(copy:)){
-    return YES;
-  }
-  return NO;
-}
-
-- (BOOL) canBecomeFirstResponder {
-  return YES;
-}
-
-//- (BOOL)resignFirstResponder{
-//    return NO;
-//}
 
 - (BOOL)_pendingLinkTap
 {
